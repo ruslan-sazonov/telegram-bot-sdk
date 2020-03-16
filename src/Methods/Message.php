@@ -429,7 +429,7 @@ trait Message
      */
     public function sendMediaGroup(array $params)
     {
-        $response = $this->uploadFile('sendMediaGroup', $params, 'media');
+        $response = $this->uploadMultipleFiles('sendMediaGroup', $params, 'media');
 
         return new MessageObject($response->getDecodedBody());
     }

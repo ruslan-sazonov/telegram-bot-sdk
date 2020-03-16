@@ -2,6 +2,7 @@
 
 namespace Telegram\Bot\Traits;
 
+use GuzzleHttp\Psr7\LazyOpenStream;
 use Telegram\Bot\Exceptions\CouldNotUploadInputFile;
 use Telegram\Bot\Exceptions\TelegramSDKException;
 use Telegram\Bot\FileUpload\InputFile;
@@ -239,6 +240,56 @@ trait Http
 
         //Sending an actual file requires it to be sent using multipart/form-data
         return $this->post($endpoint, $this->prepareMultipartParams($params, $inputFileField), true);
+    }
+
+    /**
+     * @param string $endpoint
+     * @param array $params
+     * @param $inputFileField
+     * @return TelegramRespose
+     * @throws CouldNotUploadInputFile
+     * @throws TelegramSDKException
+     */
+    protected function uploadMultipleFiles(string $endpoint, array $params, $inputFileField): TelegramRespose
+    {
+        if (!isset($params[$inputFileField])) {
+            throw CouldNotUploadInputFile::missingParam($inputFileField);
+        }
+
+        $filesToUpload = [];
+        $mediaArray = [];
+
+        foreach ($params[$inputFileField] as $file) {
+            $filesToUpload[] = [
+                'name' => $file['file_name'],
+                'contents' => new LazyOpenStream($file['file_path'], 'r'),
+            ];
+
+            $mediaArray[] = [
+                'type' => 'photo',
+                'media' => 'attach://'.$file['file_name'],
+                'caption' => $file['caption'],
+            ];
+        }
+
+        $requestParams = [
+            'multipart' => [
+                [
+                    'name' => 'chat_id',
+                    'contents' => $params['chat_id'],
+                ],
+                [
+                    'name' => 'media',
+                    'contents' => json_encode($mediaArray),
+                ],
+            ]
+        ];
+
+        foreach ($filesToUpload as $upload) {
+            array_push($requestParams['multipart'], $upload);
+        }
+
+        return $this->sendRequest('POST', $endpoint, $requestParams);
     }
 
     /**
