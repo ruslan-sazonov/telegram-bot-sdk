@@ -246,11 +246,11 @@ trait Http
      * @param string $endpoint
      * @param array $params
      * @param $inputFileField
-     * @return TelegramRespose
+     * @return TelegramResponse
      * @throws CouldNotUploadInputFile
      * @throws TelegramSDKException
      */
-    protected function uploadMultipleFiles(string $endpoint, array $params, $inputFileField): TelegramRespose
+    protected function uploadMultipleFiles(string $endpoint, array $params, $inputFileField): TelegramResponse
     {
         if (!isset($params[$inputFileField])) {
             throw CouldNotUploadInputFile::missingParam($inputFileField);
